@@ -7,13 +7,13 @@ import os
 import sys
 import re
 import json
-import httplib
+import http.client
 import mimetypes
 import base64
 
 def help():
     print \
-'''Usage:
+('''Usage:
 
     egret create
     - Create directory structure for a new couch app
@@ -36,7 +36,7 @@ def help():
     In all cases, the format of db_url is (bracketed means optional):
 
         [http(s)://][user:password@]server/dbname
-'''
+''')
 
 def create():
     '''create the basic directory structure for a new couch app'''
@@ -51,14 +51,14 @@ def make_connection(db_url):
     '''
     match = re.match(r'((?P<protocol>.+):\/\/)?((?P<user>.+):(?P<pw>.+)?@)?(?P<url>.+)', db_url)
     if not match:
-        print 'Error in db string'
+        print ('Error in db string')
         sys.exit(1)
 
     host, dbpath = match.group('url').split('/', 1)
     if match.groups('protocol') == 'https':
-        conn = httplib.HTTPSConnection(host)
+        conn = http.client.HTTPSConnection(host)
     else:
-        conn = httplib.HTTPConnection(host)
+        conn = http.client.HTTPConnection(host)
 
     headers = {'Content-type': 'application/json'}
     if match.group('user'):
@@ -72,7 +72,7 @@ def createdb(db_url):
     conn, dbpath, headers = make_connection(db_url)
     conn.request('PUT', '/%s/' % dbpath, '', headers)
     response = conn.getresponse()
-    print 'Server response:', response.status, response.reason
+    print ('Server response:', response.status, response.reason)
     
 
 def pushdata(db_url, path):
@@ -90,7 +90,7 @@ def pushdata(db_url, path):
     conn, dbpath, headers = make_connection(db_url)
     conn.request('POST', '/%s/_bulk_docs' % dbpath, json.dumps(docs), headers)
     response = conn.getresponse()
-    print 'Server response:', response.status, response.reason
+    print ('Server response:', response.status, response.reason)
 
 def push(db_url, include_dotfiles=False):
     '''push project to db at db_url, including design doc and any
@@ -125,7 +125,7 @@ def push(db_url, include_dotfiles=False):
                         else:
                            doc[d][key_name] = {fn_name: f.read()}
                 else:
-                    print 'directory recursion depth (2) exceeded'
+                    print ('directory recursion depth (2) exceeded')
                     sys.exit(1)
 
     doc['_attachments'] = {}
@@ -148,7 +148,7 @@ def push(db_url, include_dotfiles=False):
     conn, dbpath, headers = make_connection(db_url)
     conn.request('PUT', '/%s/%s' % (dbpath, doc['_id']), json.dumps(doc), headers)
     response = conn.getresponse()
-    print 'Server response:', response.status, response.reason
+    print ('Server response:', response.status, response.reason)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
